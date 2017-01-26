@@ -42,7 +42,11 @@ livecd-iso-to-pxeboot $tmpdir/microkernel.iso || KEEP_TMPDIR=yes
 mkdir $tmpdir/initrd_root
 # Unpack the first archive, which is the initramfs.  The ISO is second.
 echo "* Unpacking initrd0.img"
-gzip -d -c tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
+if gunzip --test tftpboot/initrd0.img; then
+  gunzip -d -c -f tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
+else
+  xz -d -c -f tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
+fi
 # rebuild the PXE initrd
 echo "* Repacking patched initrd"
 ( cd "$tmpdir/initrd_root";
