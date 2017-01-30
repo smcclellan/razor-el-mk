@@ -10,7 +10,8 @@ function cleanup() {
     if [ -n "$KEEP_TMPDIR" ]; then
         echo "Not removing tmpdir $tmpdir"
     else
-        [ -d $tmpdir ] && rm -rf $tmpdir
+        echo 'not deleting'
+        #[ -d $tmpdir ] && rm -rf $tmpdir
     fi
 }
 
@@ -41,24 +42,28 @@ livecd-iso-to-pxeboot $tmpdir/microkernel.iso || KEEP_TMPDIR=yes
 ## See: http://git.kernel.org/cgit/boot/dracut/dracut.git/commit/?id=ba9368fa4fedda0f72d84f910d01d7da201405a3
 mkdir $tmpdir/initrd_root
 # Unpack the first archive, which is the initramfs.  The ISO is second.
-echo "* Unpacking initrd0.img"
-if gunzip --test tftpboot/initrd0.img; then
-  gunzip -d -c -f tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
-else
-  xz -d -c -f tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
-fi
+echo "tmpdir=${tmpdir}"
+read -p "Press enter to continue"
+#echo "* Unpacking initrd0.img"
+#if gunzip --test tftpboot/initrd0.img; then
+#  echo "GZIP format detected! Extracting first."
+#  gunzip -d -c -f tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
+#else
+  (cd $tmpdir/initrd_root; cpio -id) < tftpboot/initrd0.img
+#fi
 # rebuild the PXE initrd
 echo "* Repacking patched initrd"
 ( cd "$tmpdir/initrd_root";
   find . \
   | cpio --create --format='newc' \
-  | gzip -c -9 ) \
-    > "$tmpdir"/initrd.gz
+  | xz -c -9
+  ) \
+    > "$tmpdir"/initrd.xz
 # Append the ISO image to the initrd image.
 echo "* Rebuilding tftpboot/initrd0.img"
 ( cd "$tmpdir" && echo "microkernel.iso" | cpio -H newc --quiet -L -o ) |
-  gzip -9 |
-  cat "$tmpdir"/initrd.gz - > tftpboot/initrd0.img
+  xz -9 |
+  cat "$tmpdir"/initrd.xz - > tftpboot/initrd0.img
 
 echo "* Building tarball"
 mkdir microkernel
