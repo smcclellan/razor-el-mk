@@ -36,7 +36,7 @@ gem update --system && gem install rake bundler
 setenforce 0
 cd ~
 rm -rf razor-el-mk
-git clone https://github.com/puppetlabs/razor-el-mk
+git clone -b update-facter https://github.com/smcclellan/razor-el-mk
 cd razor-el-mk
 sed -i'' -e "s/ruby\ '.*'/ruby\ '$ruby'/" Gemfile
 bundle install --path .bundle/gems/
